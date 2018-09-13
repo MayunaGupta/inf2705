@@ -80,6 +80,7 @@ public:
 	matrVisu.Rotate(-phi,1,0,0);
 	matrVisu.Rotate(-90,0,0,1);
 	matrVisu.Rotate(-theta,0,0,1);
+	matrVisu.Translate(0,0,-5);
       }
    }
    void verifierAngles() // vérifier que les angles ne débordent pas les valeurs permises
