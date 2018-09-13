@@ -66,7 +66,12 @@ public:
          // matrVisu.Translate( 0., 0., -5. );
 
          matrVisu.LoadIdentity( );
-         matrVisu.Translate( 0., 0., -dist );
+         matrVisu.Translate( 0., 0., -dist+5.0 );
+         matrVisu.Rotate(dist*cos(glm::radians(theta))*sin(glm::radians(phi)),1,0,0);
+         matrVisu.Rotate(-90,1,0,0);         
+         matrVisu.Rotate(-90,0,0,1);
+         /*matrVisu.Translate( 0., 0., -5);*/
+         //matrVisu.Rotate(5,0,1,0);
          // utilisez matrVisu.Translate(), matrVisu.Rotate(), ...
       }
    }
@@ -215,10 +220,18 @@ void FenetreTP::initialiser()
    // (partie 2) MODIFICATIONS ICI ...
    // créer le VBO pour les sommets
    // ...
+   glGenBuffers( 1, &vboTheiereSommets );
+   glBindBuffer( GL_ARRAY_BUFFER, vboTheiereSommets );
+   glBufferData( GL_ARRAY_BUFFER, sizeof(gTheiereSommets), gTheiereSommets, GL_STATIC_DRAW );
 
    // créer le VBO la connectivité
    // ...
-
+   // générer le VBO (=IBO)
+   glGenBuffers( 1, &vboTheiereConnec );
+   glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, vboTheiereConnec );
+   glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(gTheiereConnec), gTheiereConnec, GL_STATIC_DRAW );
+   glVertexAttribPointer( locVertex, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+   glEnableVertexAttribArray( locVertex );
    glBindVertexArray(0);
 
    // créer quelques autres formes
@@ -277,13 +290,10 @@ void afficherQuad( )
 // affiche une théière, dont la base est centrée en (0,0,0)
 void afficherTheiere()
 {
+   
    glBindVertexArray( vao[1] );
-   // (partie 2) MODIFICATIONS ICI ...
-   // vous pouvez utiliser temporairement cette fonction pour la première partie du TP, mais vous ferez mieux dans la seconde partie du TP
-   glBegin( GL_TRIANGLES );
-   for ( unsigned int i = 0 ; i < sizeof(gTheiereConnec)/sizeof(GLuint) ; i++ )
-      glVertex3fv( &(gTheiereSommets[3*gTheiereConnec[i]] ) );
-   glEnd( );
+   // (partie 2) MODIFICATIONS ICI ...   
+   glDrawElements(  GL_TRIANGLES, sizeof(gTheiereConnec)/sizeof(GLuint), GL_UNSIGNED_INT, 0);
    glBindVertexArray(0);
 }
 
@@ -293,7 +303,7 @@ void afficherCorps()
    // (partie 1) MODIFICATIONS ICI ...
 
    // donner la couleur du corps
-   glVertexAttrib3f( locColor, 0.0, 1.0, 0.0 ); // équivalent au glColor() de OpenGL 2.x
+   //glVertexAttrib3f( locColor, 0.0, 1.0, 0.0 ); // équivalent au glColor() de OpenGL 2.x
 
    // ajouter une ou des transformations afin de centrer le corps à la position courante "bestiole.position[]",
    // avec l'angle de rotation "bestiole.angleCorps" et de la taille "bestiole.taille"
@@ -320,10 +330,8 @@ void afficherCorps()
             matrModel.Translate(bestiole.position[0],bestiole.position[1],bestiole.position[2]);
             matrModel.Scale(bestiole.taille,bestiole.taille,bestiole.taille);
             matrModel.Rotate(90,0,1,0);
-            matrModel.Rotate(bestiole.angleCorps,1,0,0);
-
-             
-
+            matrModel.Rotate(bestiole.angleCorps,1,0,0);             
+            matrModel.Scale(1.0,1.0,2.0);
             //-----------------
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherCylindre();
@@ -341,8 +349,12 @@ void afficherCorps()
       case 2: // une théière
          glVertexAttrib3f( locColor, 0.0, 1.0, 0.0 ); // vert; équivalent au glColor() de OpenGL 2.x
          matrModel.PushMatrix();{
-            matrModel.Scale( 0.45, 0.45, 0.45 );
-            matrModel.Translate( 0.0, -2.0, 0.0 );
+            matrModel.Translate(bestiole.position[0],bestiole.position[1],bestiole.position[2]);            
+            matrModel.Rotate(90,1,0,0);
+            matrModel.Rotate(-bestiole.angleCorps,0,1,0);
+            matrModel.Translate(bestiole.taille,-bestiole.taille,0.0);   
+            matrModel.Scale(0.5*bestiole.taille,0.5*bestiole.taille,0.5*bestiole.taille);           
+            //matrModel.Scale(1.0,1.0,2.0);
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherTheiere();
          }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
@@ -362,11 +374,11 @@ void afficherAiles()
    matrModel.PushMatrix();{
       matrModel.Translate(bestiole.position[0],bestiole.position[1],bestiole.position[2]);
       matrModel.Rotate(-bestiole.angleCorps,0,0,1);
-      matrModel.Translate(bestiole.taille/2.0,-bestiole.taille/M_SQRT2,bestiole.taille/M_SQRT2);     
+      matrModel.Translate(bestiole.taille,-bestiole.taille/M_SQRT2,bestiole.taille/M_SQRT2);     
       // afficherRepereCourant( ); // débogage      
       matrModel.Rotate(-bestiole.angleAile,1,0,0);
-      matrModel.Translate(0,-bestiole.taille/2.0,0);   
-      matrModel.Scale(bestiole.taille,bestiole.taille,bestiole.taille);
+      matrModel.Translate(0,-bestiole.taille*3.0/2.0,0);   
+      matrModel.Scale(2.0*bestiole.taille,3.0*bestiole.taille,bestiole.taille);
       glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
       afficherQuad();      
       //-------------------------------------------------
@@ -375,11 +387,11 @@ void afficherAiles()
    matrModel.PushMatrix();{
       matrModel.Translate(bestiole.position[0],bestiole.position[1],bestiole.position[2]);
       matrModel.Rotate(-bestiole.angleCorps,0,0,1);
-      matrModel.Translate(bestiole.taille/2.0,bestiole.taille/M_SQRT2,bestiole.taille/M_SQRT2);     
+      matrModel.Translate(bestiole.taille,bestiole.taille/M_SQRT2,bestiole.taille/M_SQRT2);     
       // afficherRepereCourant( ); // débogage      
       matrModel.Rotate(bestiole.angleAile,1,0,0);
-      matrModel.Translate(0,bestiole.taille/2.0,0);   
-      matrModel.Scale(bestiole.taille,bestiole.taille,bestiole.taille);
+      matrModel.Translate(0,bestiole.taille*3.0/2.0,0);   
+      matrModel.Scale(2.0*bestiole.taille,3.0*bestiole.taille,bestiole.taille);
       glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
       afficherQuad();      
       //-------------------------------------------------
@@ -433,7 +445,7 @@ void afficherPattes()
       matrModel.Translate(bestiole.position[0],bestiole.position[1],bestiole.position[2]);
       
       matrModel.Rotate(-bestiole.angleCorps,0,0,1);
-      matrModel.Translate(bestiole.taille,bestiole.taille/M_SQRT2,-bestiole.taille/M_SQRT2-bestiole.taille/2);
+      matrModel.Translate(2.0*bestiole.taille,bestiole.taille/M_SQRT2,-bestiole.taille/M_SQRT2-bestiole.taille/2);
       matrModel.Rotate(-bestiole.anglePatte,0,1,-1);
       
 
@@ -452,7 +464,7 @@ void afficherPattes()
       
       matrModel.Rotate(-bestiole.angleCorps,0,0,1);
      // 
-      matrModel.Translate(bestiole.taille,-bestiole.taille/M_SQRT2,-bestiole.taille/M_SQRT2-bestiole.taille/2);
+      matrModel.Translate(2.0*bestiole.taille,-bestiole.taille/M_SQRT2,-bestiole.taille/M_SQRT2-bestiole.taille/2);
       matrModel.Rotate(bestiole.anglePatte,0,-1,-1);
 
       //matrModel.Translate(bestiole.position[0]*bestiole.taille+bestiole.taille, bestiole.position[1]-1/M_SQRT2*bestiole.taille, bestiole.position[2]-2/M_SQRT2*bestiole.taille); // (bidon) À MODIFIER      
