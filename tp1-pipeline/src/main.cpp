@@ -65,12 +65,15 @@ public:
          //                  0., 0., 1. );
          // matrVisu.Translate( 0., 0., -5. );
 
-         matrVisu.LoadIdentity( );
-         matrVisu.Translate( 0., 0., -dist+5.0 );
-         matrVisu.Rotate(dist*cos(glm::radians(theta))*sin(glm::radians(phi)),1,0,0);
-         matrVisu.Rotate(-90,1,0,0);         
-         matrVisu.Rotate(-90,0,0,1);
-         /*matrVisu.Translate( 0., 0., -5);*/
+         matrVisu.LoadIdentity();
+         matrVisu.Translate( 0,0,-dist-5-1);
+         matrVisu.Rotate(-phi,0,0,1);
+         //matrVisu.Translate( 0,0,-5);
+         matrVisu.Rotate(-90,0,1,0);
+         matrVisu.Rotate(-theta,0,1,0);
+        //  matrVisu.Rotate(90,1,0,0);
+         //matrVisu.Rotate(90,1,0,0);   
+                 /*matrVisu.Translate( 0., 0., -5);*/
          //matrVisu.Rotate(5,0,1,0);
          // utilisez matrVisu.Translate(), matrVisu.Rotate(), ...
       }
