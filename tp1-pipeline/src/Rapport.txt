@@ -18,3 +18,5 @@ Q2: Dans ce TP, on peut déplacer la bestiole avec les flèches du clavier ou
     soit toujours dirigée dans le sens de son mouvement ?
     Décrivez (avec assez de détails) comment vous implanteriez ceci dans ce TP.
 
+for always moving in the same direction we can restrict the roation of the beast along the z axis. For this all the rotations of the body, wings, head, and legs will have to be restricted in the z axis direction.
+
