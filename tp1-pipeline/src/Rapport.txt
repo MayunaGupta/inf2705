@@ -3,6 +3,8 @@ Q1: Supposons que les coordonnées du modèle soient exprimées dans un système
     Comment devrait-on alors modifier la matrice 4x4 servant à la rotation
     afin de préserver le même effet visuel d'une rotation positive ?  Quelle
     serait la nouvelle matrice pour une rotation autour de l'axe des Z ?
+
+Reponse:
 We can either swap the rows with x and y component of rotations or take negative of the row with z components, due to the properties of a matrix transformation both give the same result.
 
 
@@ -18,5 +20,6 @@ Q2: Dans ce TP, on peut déplacer la bestiole avec les flèches du clavier ou
     soit toujours dirigée dans le sens de son mouvement ?
     Décrivez (avec assez de détails) comment vous implanteriez ceci dans ce TP.
 
-for always moving in the same direction we can restrict the rotation of the beast along the z axis. For this all the rotations of the body, wings, head, and legs will have to be restricted in the z axis direction. And hence the beast will always face the same direction.
+Reponse:
+For always moving in the same direction we can restrict the rotation of the beast along the z axis. For this all the rotations of the body, wings, head, and legs will have to be restricted in the z axis direction. And hence the beast will always face the same direction.
 
