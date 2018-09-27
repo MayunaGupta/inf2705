@@ -1050,6 +1050,7 @@ public:
       glDrawArrays( GL_TRIANGLE_STRIP, 0, nsommetsCyl_ );
       glDrawArrays( GL_TRIANGLE_FAN, nsommetsCyl_, nsommetsBout_ );
       glDrawArrays( GL_TRIANGLE_FAN, nsommetsCyl_+nsommetsBout_, nsommetsBout_ );
+      
       glBindVertexArray( 0 );
   }
 private:

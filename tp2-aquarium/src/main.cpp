@@ -214,30 +214,22 @@ public:
    {
 
       glDisable( GL_CLIP_PLANE1 ); 
-      const GLfloat planDragageSommet[4*3] ={cos(angleDragage)*16.0,10.0,-7.9,16.0,-10.0,-7.9,-16.0,-10.0,-7.9,cos(angleDragage)*-16.0,10.0,-7.9};
-      const GLuint planDragageConnect[1*4] ={0,1,2,3};
+      //glDisable( GL_CLIP_PLANE0 );
 
-      glVertexAttrib4f( locColor, 1.0, 1.0, 1.0, alpha );
-      // afficher le plan mis à l'échelle, tourné selon l'angle courant et à la position courante
-      // partie 1: modifs ici ...
+      glVertexAttrib4f( locColor,1.0, 1.0, 1.0, alpha );
+      glEnableVertexAttribArray( locColor );
 
-      // créer le VBO pour les sommets
-      glGenBuffers( 1, &vbo[0] );
-      glBindBuffer( GL_ARRAY_BUFFER, vbo[0] );
-      glBufferData( GL_ARRAY_BUFFER, sizeof(planDragageSommet), planDragageSommet, GL_STATIC_DRAW );
-
-      // créer le VBO la connectivité
-      glGenBuffers( 1, &vbo[1] );
-      glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, vbo[1] );
-      glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(planDragageConnect), planDragageConnect, GL_STATIC_DRAW );
-      glVertexAttribPointer( locVertex, 3, GL_FLOAT, GL_FALSE, 0, NULL );
-      glEnableVertexAttribArray( locVertex );
-      glBindVertexArray(0);
-
-      glBindVertexArray( vbo[1] );
-      glDrawElements(  GL_TRIANGLE_FAN, sizeof(planDragageConnect)/sizeof(GLuint), GL_UNSIGNED_INT, 0);
-      glBindVertexArray(0);
-
+      matrModel.PushMatrix();{
+         glEnable(GL_BLEND);
+         matrModel.Rotate(etat.angleDragage,0,1,0);
+         matrModel.Scale(etat.bDim.x, etat.bDim.y,1.0);         
+         matrModel.Translate(0.0,0.0,-etat.planDragage[3]);
+         glBindVertexArray( vao);
+         glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+         glDrawElements( GL_TRIANGLES, 6,GL_UNSIGNED_INT, 0);
+         glBindVertexArray(0);
+      
+      }matrModel.PopMatrix(); 
    }
 
    void afficherParois()
@@ -264,10 +256,9 @@ public:
    void afficherTousLesPoissons()
    {
       glVertexAttrib4f( locColor, 1.0, 1.0, 1.0, 1.0 );
-
       std::vector<Poisson*>::iterator it;
       for ( it = poissons.begin() ; it != poissons.end() ; it++ )
-      {
+      {  
          (*it)->afficher();
       }
    }
@@ -279,17 +270,41 @@ public:
       // puis tenir compte aussi du plan de dragage
       // activer les plans de coupe et afficher la scène normalement
       // partie 1: modifs ici ...     
-      glEnable( GL_CLIP_PLANE0  );
-      glEnable( GL_CLIP_PLANE1  ); 
+      
 
       // afficher les poissons en plein
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       afficherTousLesPoissons();
+      glEnable( GL_CLIP_PLANE0  );
+      glEnable( GL_CLIP_PLANE1  ); 
+      
       // afficher les poissons en fil de fer (squelette)
       // ...
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      afficherTousLesPoissons();
 
       // « fermer » les poissons
       // partie 1: modifs ici ...
       // ...
+
+      glEnable(GL_STENCIL_TEST);
+      glColorMask( GL_FALSE , GL_FALSE , GL_FALSE , GL_FALSE );
+      glDisable(GL_DEPTH_TEST);
+      glEnable( GL_CULL_FACE );      
+      glStencilFunc(GL_ALWAYS,1, 1);
+      glCullFace(GL_FRONT);
+      glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);
+      glDisable( GL_CLIP_PLANE1 );
+      afficherTousLesPoissons();
+      glCullFace(GL_BACK);
+      glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
+      afficherTousLesPoissons();
+      glColorMask( GL_TRUE , GL_TRUE , GL_TRUE , GL_TRUE );
+      glEnable(GL_DEPTH_TEST);
+      glDisable( GL_CULL_FACE ); 
+      glStencilFunc( GL_NOTEQUAL, 0, 0xff);
+      afficherQuad(1.0);
+      glDisable(GL_STENCIL_TEST);
 
    }
 
@@ -430,10 +445,23 @@ void FenetreTP::initialiser()
    // *** l'initialisation des objets graphiques doit être faite seulement après l'initialisation de la fenêtre graphique
 
    // partie 1: initialiser le VAO (pour le quad de l'aquarium)
+   glGenVertexArrays( 1, &vao );
+   glBindVertexArray( vao );
    // ...
    // partie 1: créer les deux VBO pour les sommets et la connectivité
    // ...
+   glGenBuffers( 1, &vbo[0] );
+   glBindBuffer( GL_ARRAY_BUFFER, vbo[0] );
+   glBufferData( GL_ARRAY_BUFFER, sizeof(coo), coo, GL_STATIC_DRAW );
 
+   // créer le VBO la connectivité
+   glGenBuffers( 1, &vbo[1] );
+   glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, vbo[1] );
+   glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(connec), connec, GL_STATIC_DRAW );
+   glVertexAttribPointer( locVertex, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+   glEnableVertexAttribArray( locVertex );
+   
+   glBindVertexArray(0);
    // ...
 
    // créer quelques autres formes
