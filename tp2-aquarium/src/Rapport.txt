@@ -5,6 +5,7 @@ Q1: Dans le nuanceur de sommets, si on souhaite calculer la profondeur du
 
     Pourquoi doit-on inverser le signe du résultat calculé ?
 
+Ans: The depth is obtained by matrix multiplication of the the projection matrix to the z component. The minus arises from the row transformation of the said matrix to obtain the z component  
 
 Q2: Pourquoi ne peut-on pas utiliser le même programme de nuanceurs que pour
     les poissons pour voir l'aquarium (et surtout ses côtés!) dans les deux
@@ -13,4 +14,5 @@ Q2: Pourquoi ne peut-on pas utiliser le même programme de nuanceurs que pour
     de ne pas modifier les couleurs, mais le programme de nuanceurs des
     poissons ne fonctionnera pas correctement pour afficher l'aquarium et
     ses côtés. Pourquoi?
-
+Ans: The vertex shader program gives the required set of vertices for the fishes and the aquarium however the geometry shader is restricted to output a single type of objects at a time, since the
+fishes are not composed of quadrilaterals but rather made from triangle strips it would behave randomly if outputd from the same shader.

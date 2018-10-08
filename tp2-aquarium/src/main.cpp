@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <SDL2/SDL.h>
 #include "inf2705-matrice.h"
 #include "inf2705-nuanceur.h"
 #include "inf2705-fenetre.h"
@@ -12,7 +13,7 @@
 #include <glm/gtx/io.hpp>
 #include <vector>
 #include <iterator>
-
+//#define CLAMP(x, upper, lower) (MIN(upper, MAX(x, LOWER)))
 // variables pour l'utilisation des nuanceurs
 GLuint prog;      // votre programme de nuanceurs
 GLint locVertex = -1;
@@ -33,6 +34,20 @@ GLint locmatrProjBase = -1;
 // matrices du pipeline graphique
 MatricePipeline matrModel, matrVisu, matrProj;
 
+//float  smoothstep( float x1, float x2, float x ){ float t = clamp((x-x1)/(x2-x1), 0.0, 1.0 );  return t*t*(3.0 -2.0*t); }
+double clamp(double x, double upper, double lower)
+{
+    return std::min(upper, std::max(x, lower));
+}
+
+
+
+float smoothstep(float c1, float c2, float fact){
+   float t= clamp((fact-c1)/(c2-c1),0,1.0);
+   return t*t*(3.0 -2.0*t);
+}
+
+glm::vec3 mix( glm::vec3 c1, glm::vec3 c2, float fact ) { return c1*(1-fact) + c2*fact; }
 // les formes
 FormeCube *cubeFil = NULL;
 FormeCube *cube = NULL;
@@ -88,12 +103,14 @@ public:
 class Poisson
 {
 public:
+   
    Poisson( glm::vec3 pos = glm::vec3(3.0,1.0,0.0), glm::vec3 vit = glm::vec3(1.0,0.0,0.0), float tai = 0.5 )
       : position(pos), vitesse(vit), taille(tai)
    {}
 
    void afficher()
-   {
+   {  
+
       matrModel.PushMatrix();{ // sauvegarder la tranformation courante
 
          // amener le repère à la position courante
@@ -101,11 +118,15 @@ public:
 
          // partie 2: modifs ici ...
          // donner la couleur de sélection
-
+         
          // afficher le corps
          // (en utilisant le cylindre centré dans l'axe des Z, de rayon 1, entre (0,0,0) et (0,0,1))
-         glm::vec3 coulCorps( 0.0, 1.0, 0.0 ); // vert
-         glVertexAttrib3fv( locColor, glm::value_ptr(coulCorps) );
+         //else{
+         //glm::vec3 coulCorps( 0.0, 1.0, 0.0 ); // vert
+         //}
+         
+         
+         glVertexAttrib3fv( locColor, glm::value_ptr(couleurPoisson) );
          matrModel.PushMatrix();{
             matrModel.Scale( 5.0*taille, taille, taille );
             matrModel.Rotate( 90.0, 0.0, 1.0, 0.0 );
@@ -136,7 +157,11 @@ public:
    void avancerPhysique()
    {
       const float dt = 0.5; // intervalle entre chaque affichage (en secondes)
-      position += dt * vitesse;
+      if (not modeSelection){
+         position += dt * vitesse;
+      }
+
+      
       // test rapide pour empêcher que les poissons sortent de l'aquarium
       if ( abs(position.x) > 0.9*etat.bDim.x ) vitesse = -vitesse;
    }
@@ -144,7 +169,9 @@ public:
    // les variables du poisson
    glm::vec3 position;   // en unités
    glm::vec3 vitesse;    // en unités/seconde
-   float taille;         // en unités
+   float taille;      //en unites
+   bool modeSelection; 
+   glm::vec3 couleurPoisson=glm::vec3(0,1.0,0);
 };
 
 //
@@ -200,10 +227,31 @@ public:
          float taille = glm::mix( 0.5 , 0.9, rand()/((double)RAND_MAX) );
 
          // créer un nouveau poisson
-         Poisson *p = new Poisson( pos[i], vit, taille );
+         Poisson *p = new Poisson( pos[i], vit, taille);
+         float fact=smoothstep(30,50,i+30);
 
+         //glm::vec3 col=mix(glm::vec3(0.0,1.0,0.0),glm::vec3(0.0,0.0,1.0),fact);
+         //float c1=float(i)/float(sizeof(pos)/sizeof(pos[0]));
+         p->couleurPoisson=mix(glm::vec3(0,1.0,0.0),glm::vec3(0,0,1.0),fact);
+
+         //float c1=float(i)/(sizeof(pos)/sizeof(pos[0]));
+         /*if (pos[i].x<0.3*etat.bDim.x){
+            p->couleurPoisson=glm::vec3(0,1.0,0); 
+
+         }
+         else if (pos[i].x>0.3*etat.bDim.x && pos[i].x<0.5*etat.bDim.x)
+         {
+
+         }
+         else{
+            p->couleurPoisson=glm::vec3(0,0.0,1.0); 
+         }
+         */
          // assigner une couleur de sélection
+         
          // partie 2: modifs ici ...
+
+         
 
          // ajouter ce poisson dans la liste
          poissons.push_back( p );
@@ -379,13 +427,14 @@ void chargerNuanceurs()
          ProgNuanceur::afficherLogCompile( nuanceurObj );
          delete [] chainesSommets;
       }
-#if 0
+#if 1
       // partie 2: enlever le "#if 0" pour utiliser le nuanceur de géométrie
       const GLchar *chainesGeometrie = ProgNuanceur::lireNuanceur( "nuanceurGeometrie.glsl" );
       if ( chainesGeometrie != NULL )
       {
          GLuint nuanceurObj = glCreateShader( GL_GEOMETRY_SHADER );
          glShaderSource( nuanceurObj, 1, &chainesGeometrie, NULL );
+
          glCompileShader( nuanceurObj );
          glAttachShader( prog, nuanceurObj );
          ProgNuanceur::afficherLogCompile( nuanceurObj );
@@ -522,12 +571,51 @@ void FenetreTP::afficherScene( )
 
    // sélectionner ?
    // partie 2: modifs ici ...
+   if ( !etat.modeSelection) { glDisable( GL_BLEND ); glDepthMask( GL_TRUE ); }
+
+   // sélectionner ?
+   if ( etat.modeSelection )
+   {
+      // s'assurer que toutes les opérations sont terminées
+      glFinish();
+
+      // obtenir la clôture et calculer la position demandée
+      GLint cloture[4]; 
+      glGetIntegerv( GL_VIEWPORT, cloture );
+      GLint posX = etat.sourisPosPrec.x, posY = cloture[3]-etat.sourisPosPrec.y;//window -mouse_y
+       
+      // dire de lire le tampon arrière où l'on vient tout juste de dessiner
+      glReadBuffer( GL_BACK );
+
+      // obtenir la couleur
+      GLubyte couleur[3];
+      glReadPixels( posX, posY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, couleur );
+      //std::cout << "couleur = " << (int) couleur[0] << " " << (int) couleur[1] << " " << (int) couleur[2] << std::endl;
+
+      // obtenir la profondeur (accessoirement)
+      GLfloat profondeur;
+      glReadPixels( posX, posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &profondeur );
+      // std::cout << "profondeur = " << profondeur << std::endl;
+
+      // la couleur lu indique l'objet sélectionné
+      if ( couleur[1] != 0 )
+         std::cout << "\tobjet = CUBE " << couleur[1] / 50 << std::endl;
+      else if ( couleur[0] != 0 )
+         std::cout << "\tobjet = SPHERE " << couleur[0] / 50 << std::endl;
+
+
+   }
+
+   
 
 }
 
 void FenetreTP::redimensionner( GLsizei w, GLsizei h )
 {
-   glViewport( 0, 0, w, h );
+   glViewport( 0, 0, w, h*0.5);
+   glViewportIndexedf( 1, 0, h*0.5, w, h*0.5 ); 
+   glScissorIndexed( 1, 0, h*0.5, w, h*0.5 );   
+
 }
 
 void FenetreTP::clavier( TP_touche touche )
@@ -592,6 +680,7 @@ void FenetreTP::clavier( TP_touche touche )
 
    case TP_a: // Atténuer ou non la couleur selon l'éloignement
       etat.attEloignement = !etat.attEloignement;
+      etat.attEloignement=1;
       std::cout << " etat.attEloignement=" << etat.attEloignement << std::endl;
       break;
 

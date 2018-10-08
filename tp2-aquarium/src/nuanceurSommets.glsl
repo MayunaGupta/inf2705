@@ -15,8 +15,8 @@ layout(location=3) in vec4 Color;
 
 out Attribs {
    vec4 couleur;
-   // float clipDistanceDragage;
-   // float clipDistanceRayonsX;
+   float clipDistanceDragage;
+   float clipDistanceRayonsX;
 } AttribsOut;
 
 void main( void )
@@ -31,7 +31,8 @@ void main( void )
 
    gl_ClipDistance [0] = dot( planDragage , pos );
    gl_ClipDistance [1] = dot( planRayonsX , pos );
-
+   AttribsOut.clipDistanceDragage=gl_ClipDistance[0];
+   AttribsOut.clipDistanceRayonsX=gl_ClipDistance [1];
    // Mettre un test bidon afin que l'optimisation du compilateur n'élimine l'attribut "planDragage".
    // Mettre un test bidon afin que l'optimisation du compilateur n'élimine l'attribut "planRayonsX".
    // Vous ENLEVEREZ ce test inutile!
