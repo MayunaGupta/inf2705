@@ -3,6 +3,7 @@
 const float M_PI = 3.14159265358979323846;	// pi
 const float M_PI_2 = 1.57079632679489661923;	// pi/2
 
+
 uniform mat4 matrModel;
 uniform mat4 matrVisu;
 uniform mat4 matrProj;
@@ -33,7 +34,10 @@ void main( void )
    gl_ClipDistance [1] = dot( planRayonsX , pos );
    AttribsOut.clipDistanceDragage=gl_ClipDistance[0];
    AttribsOut.clipDistanceRayonsX=gl_ClipDistance [1];
-   // Mettre un test bidon afin que l'optimisation du compilateur n'élimine l'attribut "planDragage".
+    
+      //AttribsOut.couleur = mix(Color, vec4(0.0, 1.0, 1.0, 1.0), Vertex.z);
+  
+// Mettre un test bidon afin que l'optimisation du compilateur n'élimine l'attribut "planDragage".
    // Mettre un test bidon afin que l'optimisation du compilateur n'élimine l'attribut "planRayonsX".
    // Vous ENLEVEREZ ce test inutile!
    if ( planDragage.x + planRayonsX.x < -10000.0 ) AttribsOut.couleur.r += 0.001;

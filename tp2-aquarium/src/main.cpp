@@ -23,7 +23,7 @@ GLint locmatrVisu = -1;
 GLint locmatrProj = -1;
 GLint locplanDragage = -1;
 GLint locplanRayonsX = -1;
-GLint locattEloignement = -1;
+GLint locattEloignement = 1;
 GLuint progBase;  // le programme de nuanceurs de base
 GLint locVertexBase = -1;
 GLint locColorBase = -1;
@@ -60,6 +60,7 @@ GLuint vbo[2] = {0,0};
 //
 struct Etat
 {
+   bool wasSelectionMode;
    bool modeSelection;    // on est en mode sélection?
    bool enmouvement;      // le modèle est en mouvement/rotation automatique ou non
    bool afficheAxes;      // indique si on affiche les axes
@@ -70,7 +71,7 @@ struct Etat
    glm::vec4 planRayonsX; // équation du plan de rayonX (partie 1)
    glm::vec4 planDragage; // équation du plan de dragage (partie 1)
    GLfloat angleDragage;  // angle (degrés) du plan de dragage autour de x (partie 1)
-} etat = { false, true, true, false, glm::vec4( 16.0, 10.0, 8.0, 1.0 ), glm::ivec2(0), glm::vec4( 1, 0, 0, 4.0 ), glm::vec4( 0, 0, 1, 7.9 ), 0.0 };
+} etat = { false,false, true, true, false, glm::vec4( 16.0, 10.0, 8.0, 1.0 ), glm::ivec2(0), glm::vec4( 1, 0, 0, 4.0 ), glm::vec4( 0, 0, 1, 7.9 ), 0.0 };
 
 //
 // variables pour définir le point de vue
@@ -124,7 +125,8 @@ public:
          //else{
          //glm::vec3 coulCorps( 0.0, 1.0, 0.0 ); // vert
          //}
-         
+
+        
          
          glVertexAttrib3fv( locColor, glm::value_ptr(couleurPoisson) );
          matrModel.PushMatrix();{
@@ -157,7 +159,7 @@ public:
    void avancerPhysique()
    {
       const float dt = 0.5; // intervalle entre chaque affichage (en secondes)
-      if (not modeSelection){
+      if (not estSelectionne){
          position += dt * vitesse;
       }
 
@@ -170,8 +172,8 @@ public:
    glm::vec3 position;   // en unités
    glm::vec3 vitesse;    // en unités/seconde
    float taille;      //en unites
-   bool modeSelection; 
-   glm::vec3 couleurPoisson=glm::vec3(0,1.0,0);
+   bool estSelectionne; 
+   glm::vec3 couleurPoisson=glm::vec3(0.0,1.0,0.0);
 };
 
 //
@@ -218,7 +220,7 @@ public:
       // remplir l'aquarium
       for ( unsigned int i = 0 ; i < sizeof(pos)/sizeof(pos[0]) ; ++i )
       {
-         // donner position aléatoire en x
+         // donner position aléatoire en 
          pos[i].x = glm::mix( -0.9*etat.bDim.x, 0.9*etat.bDim.x, rand()/((double)RAND_MAX) );
          // donner vitesse aléatoire en x
          glm::vec3 vit = glm::vec3( glm::mix( -0.2, 0.2, rand()/((double)RAND_MAX) ), 0.0, 0.0 );
@@ -228,12 +230,10 @@ public:
 
          // créer un nouveau poisson
          Poisson *p = new Poisson( pos[i], vit, taille);
-         float fact=smoothstep(30,50,i+30);
-
-         //glm::vec3 col=mix(glm::vec3(0.0,1.0,0.0),glm::vec3(0.0,0.0,1.0),fact);
-         //float c1=float(i)/float(sizeof(pos)/sizeof(pos[0]));
-         p->couleurPoisson=mix(glm::vec3(0,1.0,0.0),glm::vec3(0,0,1.0),fact);
-
+         //float fact=smoothstep(30,50,i+30);//glm::vec3 col=mix(glm::vec3(0.0,1.0,0.0),glm::vec3(0.0,0.0,1.0),fact);
+         float c1=float(i)/float(sizeof(pos)/sizeof(pos[0]));
+         p->couleurPoisson=glm::vec3(0,1.0,0.0)*c1+glm::vec3(0,0,1.0);
+         p->estSelectionne=0;
          //float c1=float(i)/(sizeof(pos)/sizeof(pos[0]));
          /*if (pos[i].x<0.3*etat.bDim.x){
             p->couleurPoisson=glm::vec3(0,1.0,0); 
@@ -569,39 +569,100 @@ void FenetreTP::afficherScene( )
    // tracer les parois de l'aquarium
    aquarium.afficherParois( );
 
+   
+ 
+
+//       glReadPixels(posX, posY, 1, 1, GL_RGB, GL_FLOAT, couleur);
+//       std::cout << "couleur = " <<  couleur[0] << " " << couleur[1] << " " <<  couleur[2] << std::endl;
+ 
+
    // sélectionner ?
    // partie 2: modifs ici ...
    if ( !etat.modeSelection) { glDisable( GL_BLEND ); glDepthMask( GL_TRUE ); }
 
    // sélectionner ?
-   if ( etat.modeSelection )
-   {
+
       // s'assurer que toutes les opérations sont terminées
       glFinish();
 
-      // obtenir la clôture et calculer la position demandée
-      GLint cloture[4]; 
-      glGetIntegerv( GL_VIEWPORT, cloture );
-      GLint posX = etat.sourisPosPrec.x, posY = cloture[3]-etat.sourisPosPrec.y;//window -mouse_y
-       
-      // dire de lire le tampon arrière où l'on vient tout juste de dessiner
-      glReadBuffer( GL_BACK );
+      GLint cloture[4];
+      glGetIntegerv(GL_VIEWPORT, cloture);
+      GLint posX = etat.sourisPosPrec.x, posY = cloture[1] + cloture[3] - etat.sourisPosPrec.y;
+      GLfloat couleur[3];
+      glm::vec3 couleurPoisson;
+      glReadPixels(posX, posY, 1, 1, GL_RGB, GL_FLOAT, couleur);
+      // std::cout << "color: " << couleur[0] << " " << couleur[1] << " " << couleur[2] << std::endl;
+      int temp;
 
-      // obtenir la couleur
-      GLubyte couleur[3];
-      glReadPixels( posX, posY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, couleur );
-      //std::cout << "couleur = " << (int) couleur[0] << " " << (int) couleur[1] << " " << (int) couleur[2] << std::endl;
+
 
       // obtenir la profondeur (accessoirement)
-      GLfloat profondeur;
-      glReadPixels( posX, posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &profondeur );
+      // GLfloat profondeur;
+      // glReadPixels( posX, posY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &profondeur );
       // std::cout << "profondeur = " << profondeur << std::endl;
 
       // la couleur lu indique l'objet sélectionné
-      if ( couleur[1] != 0 )
-         std::cout << "\tobjet = CUBE " << couleur[1] / 50 << std::endl;
-      else if ( couleur[0] != 0 )
-         std::cout << "\tobjet = SPHERE " << couleur[0] / 50 << std::endl;
+      // if ( couleur[1] != 0 )
+      //    std::cout << "\tobjet = CUBE " << couleur[1] / 50 << std::endl;
+      // else if ( couleur[0] != 0 )
+      //    std::cout << "\tobjet = SPHERE " << couleur[0] / 50 << std::endl;
+
+      if (etat.modeSelection ) {
+      if(true){
+            etat.wasSelectionMode = true;
+
+            // std::cout << "Hello " << std::endl;
+         
+            bool t;
+            //if(couleur!=glm::vec3(0.0,0.0,0.0)){
+                  for ( unsigned int i = 0 ; i < 25 ; i++ ){
+                        float c1=float(i)/25.0;
+                        t=true;
+                        couleurPoisson= glm::vec3(0.0,1.0,0.0)*c1+  glm::vec3(0.0,0.0,1.0);
+                        // std::cout<<i<<std::endl;
+                        for(int g=0;g<3;g++){
+                              t = t && (abs(couleur[g]-(float)couleurPoisson[g])<=0.005);
+                              //std::cout << (abs(couleur[g]-(float)couleurPoisson[g])<=0.0005) << std::endl;
+                              //std::cout << "1st c: " << couleur[g] << " 2nd c: " << couleurPoisson[g]<< " c1: " <<c1<<" t val: "<< t << std::endl;
+                        }
+                        //std::cout << "We have i= " << i  << " and t= " << t << std::endl;
+                        if(t==true){ 
+                              //std::cout << "Break at i= " << i << std::endl;
+                              temp =  i;
+                              break;
+                        }
+                  }
+	      //std::cout<<"temp is "<< temp<<std::endl;
+
+
+
+                                          Poisson* selectedFish = nullptr;
+                                          auto it = aquarium.poissons.begin();
+                                          for (int h =0 ; h <= temp; h++) {
+                                                if(h==temp) selectedFish = (*it);
+                                          it++;
+                                          }
+
+                                          if (selectedFish != nullptr) {
+                                                selectedFish->estSelectionne ^= true;
+                                          }
+
+
+
+
+
+
+
+
+      } 
+      else if (!etat.modeSelection) {
+            etat.wasSelectionMode = false;
+      }
+	
+
+	
+
+	
 
 
    }
@@ -612,8 +673,8 @@ void FenetreTP::afficherScene( )
 
 void FenetreTP::redimensionner( GLsizei w, GLsizei h )
 {
-   glViewport( 0, 0, w, h*0.5);
-   glViewportIndexedf( 1, 0, h*0.5, w, h*0.5 ); 
+   glViewport( 0, h*0.5, w, h*0.5);
+   glViewportIndexedf( 1, 0, 0, w, h*0.5 ); 
    glScissorIndexed( 1, 0, h*0.5, w, h*0.5 );   
 
 }
@@ -680,7 +741,7 @@ void FenetreTP::clavier( TP_touche touche )
 
    case TP_a: // Atténuer ou non la couleur selon l'éloignement
       etat.attEloignement = !etat.attEloignement;
-      etat.attEloignement=1;
+      //wetat.attEloignement=1;
       std::cout << " etat.attEloignement=" << etat.attEloignement << std::endl;
       break;
 

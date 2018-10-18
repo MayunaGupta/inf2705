@@ -10,8 +10,7 @@ layout(triangle_strip, max_vertices = 6) out;
 
 
 in Attribs {
-   vec4 couleur; 
-
+   vec4 couleur;
    float clipDistanceDragage;
    float clipDistanceRayonsX;
 
@@ -20,7 +19,6 @@ in Attribs {
 
 out Attribs {
    vec4 couleur;
-   
 } AttribsOut;
 
 

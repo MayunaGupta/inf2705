@@ -21,31 +21,28 @@ void main( void )
 {
    // la couleur du fragment est la couleur interpolée
    FragColor = AttribsIn.couleur;
+   
 //   attEloignement=1;
    // atténuer selon la profondeur
-//   if ( attEloignement == 1 )
-  // {
+   if ( attEloignement == 1 )
+  {
       // Mettre un énoncé bidon afin que l'optimisation du compilateur n'élimine l'attribut "attEloignement".
       // Vous ENLEVEREZ ce test inutile!
       if ( FragColor.x < -10000.0 ) discard;
-      
+ 
       // Obtenir la distance à la caméra du sommet dans le repère de la caméra
       float dist = gl_FragCoord.z / gl_FragCoord.w;
       //float dist = - (matrVisu * matrModel * Vertex) .z;
 
 	// Obtenir un facteur d'interpolation entre 0 et 1
-      float factDist = smoothstep(30,50,dist);
+      float factDist = smoothstep(debAttenuation,finAttenuation,dist);
       // Modifier la couleur du fragment en utilisant ce facteur
       // ...
-      FragColorFish=mix(FragColorBlue,FragColorGreen,factDist);
-
-      // pour déboguer et « voir » le facteur ou la distance, on peut utiliser:
-      FragColor = vec4( vec3(factDist), 1.0 )*FragColorFish;
-    // FragColor = vec4( vec3(dist-floor(dist)), 1.0 )*FragColorFish;
-   //}
-   //float factDist = smoothstep(-30,-50,-gl_FragCoord.z / gl_FragCoord.w);
-   // pour déboguer et « voir » le comportement de z ou w, on peut utiliser:
-//   FragColor = vec4( vec3(factDist), 1.0 );
-  // FragColorFish=mix(FragColorGreen,FragColorBlue,factDist);
-  // FragColor=FragColorFish*FragColor;
+      FragColor.xyz*=factDist;
+      FragColor = mix(FragColor, vec4(0.0, 1.0, 1.0, 1.0),dist );
+      
+   }
+   
+ 
+ 
 }
