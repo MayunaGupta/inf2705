@@ -62,14 +62,40 @@ out vec4 FragColor;
 
 float calculerSpot( in vec3 D, in vec3 L )
 {
-   float spotFacteur = 1.0;
-   return( spotFacteur );
+   float spotFactor = 0.0;
+   float cos_delta= cos(radians(LightSource.spotAngleOuverture));
+   float cos_inner= cos_delta;
+   float cos_outer= pow(cos_delta, 1.01 + 0.5 * LightSource.spotExponent);
+   float cos_gamma= max( dot( normalize( L),normalize( D) ), 0.0 ); 
+   
+   if (cos_gamma > cos_delta){
+
+      //opengl or direct 3d
+      spotFactor= utiliseDirect ? pow(cos_gamma,LightSource.spotExponent) : smoothstep ( cos_outer, cos_inner , cos_gamma );   
+   }
+  
+
+   return( spotFactor );
 }
 
-vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O )
+vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O, in vec3 D )
 {
-   vec4 grisUniforme = vec4(0.7,0.7,0.7,1.0);
-   return( grisUniforme );
+   vec4 coulp = vec4(0.0,0.0,0.0,0.0);
+   coulp += FrontMaterial.ambient * LightSource.ambient;
+   
+   float NdotL = max( 0.0, dot( N, L ) );
+
+   coulp += FrontMaterial.diffuse * LightSource.diffuse * NdotL;
+
+   // calcul de la composante spéculaire (selon Phong ou Blinn)
+
+
+   float NdotHV = max( 0.0, ( utiliseBlinn ) ? dot( normalize( L + O ), N ) : dot( reflect( -L, N ), O ) );
+   coulp += FrontMaterial.specular * LightSource.specular *pow( NdotHV, FrontMaterial.shininess );
+
+   coulp=coulp*calculerSpot(D,L);
+   coulp = (!utiliseCouleur) ? vec4( 0.2, 0.2, 0.2, 1.0 ) : coulp;
+   return( coulp );
 }
 
 void main( void )
@@ -81,8 +107,10 @@ void main( void )
    vec3 O = normalize( AttribsIn.obsVec );  // position de l'observateur
 
    vec3 L[2];
+   vec3 D[2];
    for(int i=0; i<2; i++){
       L[i] = normalize( AttribsIn.lightVec[i] ); // vecteur vers la source lumineuse
+      D[i] = normalize(AttribsIn.spotDir[i]);
    }
 
    // assigner la couleur finale
@@ -92,24 +120,13 @@ void main( void )
 
    vec4 coul = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
    // calcul de la composante ambiante de la 1e source de lumière
-   // vec4 coul = calculerReflexion( L, N, O );
-
+   
    for(int i=0; i<2; i++){
-      coul += FrontMaterial.ambient * LightSource.ambient;
-     
-      float NdotL = max( 0.0, dot( N, L[i] ) );
-
-      coul += FrontMaterial.diffuse * LightSource.diffuse * NdotL;
-
-      // calcul de la composante spéculaire (selon Phong ou Blinn)
-      
-
-      float NdotHV = max( 0.0, ( utiliseBlinn ) ? dot( normalize( L[i] + O ), N ) : dot( reflect( -L[i], N ), O ) );
-      coul += FrontMaterial.specular * LightSource.specular *pow( NdotHV, FrontMaterial.shininess );
+      coul +=  calculerReflexion( L[i], N, O ,D[i]);
       
    }
    
    
    FragColor = (typeIllumination==0) ? AttribsIn.couleur : clamp( coul, 0.0, 1.0 );
-   //if ( afficheNormales ) FragColor = vec4(N,1.0);
+   if ( afficheNormales ) FragColor = vec4(N,1.0);
 }

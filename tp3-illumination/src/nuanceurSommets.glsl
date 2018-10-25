@@ -1,3 +1,4 @@
+
 #version 410
 
 // Définition des paramètres des sources de lumière
@@ -58,6 +59,7 @@ layout(location=2) in vec3 Normal;
 layout(location=3) in vec4 Color;
 layout(location=8) in vec4 TexCoord;
 
+
 out Attribs {
    vec4 couleur;
    vec3 normale;
@@ -68,24 +70,37 @@ out Attribs {
 
 float calculerSpot( in vec3 D, in vec3 L )
 {
-   float spotFacteur = 1.0;
-   return( spotFacteur );
-}
-
-vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O ,in vec3 LightPos)
-{
-   vec4 newColor = vec4(0.0);
+   float spotFactor = 0.0;
+   float cos_delta= cos(radians(LightSource.spotAngleOuverture));
+   float cos_inner= cos_delta;
+   float cos_outer= pow(cos_delta, 1.01 + 0.5 * LightSource.spotExponent);
+   float cos_gamma= max( dot( normalize( L),normalize( D) ), 0.0 ); 
    
+   if (cos_gamma > cos_delta){
+
+      //opengl or direct 3d
+      spotFactor= utiliseDirect ? pow(cos_gamma,LightSource.spotExponent) : smoothstep ( cos_outer, cos_inner , cos_gamma );   
+   }
+  
+
+   return( spotFactor );
+}
+vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O, in vec3 D)
+{  
+   vec4 newColor = vec4(0.0);
+   newColor += FrontMaterial.ambient * LightSource.ambient;
    // produit scalaire pour la réflexion spéculaire
    float NdotHV = max( dot( normalize( L + O ), N), 0.0 );
 
-   newColor = FrontMaterial.diffuse * LightSource.diffuse * max(0.0,dot(N,L));
+   newColor += FrontMaterial.diffuse * LightSource.diffuse * max(0.0,dot(N,L));
    // composante spéculaire
    
    newColor += FrontMaterial.specular * LightSource.specular * pow(NdotHV, FrontMaterial.shininess);
    // composante ambiante
-   newColor += FrontMaterial.ambient * LightSource.ambient;
    
+
+   newColor *= calculerSpot(D,L);
+   newColor = (!utiliseCouleur) ? vec4( 0.2, 0.2, 0.2, 1.0 ) : newColor;
    return( newColor );
 }
 
@@ -105,13 +120,16 @@ void main( void )
    //
    AttribsOut.normale = matrNormale * Normal;
    AttribsOut.obsVec = normalize(-pos); 
+
    for(int i=0;i<2;i++){
 
       AttribsOut.lightVec[i] = ( matrVisu * LightSource.position[i] ).xyz - pos;
       AttribsOut.spotDir[i] = transpose(inverse(mat3(matrVisu ))) *(-LightSource.spotDirection[i]);
-      AttribsOut.couleur += calculerReflexion( AttribsOut.lightVec[i], AttribsOut.normale, AttribsOut.obsVec ,vec3(LightSource.position[i]));
-   
-   
+      AttribsOut.couleur += calculerReflexion( AttribsOut.lightVec[i], AttribsOut.normale, AttribsOut.obsVec, AttribsOut.spotDir[i]);
+
+
+      //float spotFactor= calculerSpot(AttribsOut.spotDir[i] , AttribsOut.lightVec[i]);
+     // AttribsOut.couleur= AttribsOut.couleur*spotFactor;
       
    }
    
