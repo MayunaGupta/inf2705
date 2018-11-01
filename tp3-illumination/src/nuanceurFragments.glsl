@@ -56,6 +56,7 @@ in Attribs {
    vec3 obsVec;
    vec3 lightVec[2];
    vec3 spotDir[2];
+   vec2 texCoord;
 } AttribsIn;
 
 out vec4 FragColor;
@@ -115,7 +116,7 @@ void main( void )
 
    // assigner la couleur finale
    //FragColor = AttribsIn.couleur;
-   FragColor = vec4( 0.5, 0.5, 0.5, 1.0 ); // gris moche!
+   FragColor = vec4( 0.7, 0.7, 0.7, 1.0 ); // gris moche!
    // ajout de l’émission et du terme ambiant du modèle d’illumination
 
    vec4 coul = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
@@ -126,7 +127,14 @@ void main( void )
       
    }
    
+   vec4 couleur0 = texnumero != 0 ? texture( laTexture, AttribsIn.texCoord ) : vec4(1.0);
+
+
+   FragColor = (typeIllumination==0) ? clamp(AttribsIn.couleur*couleur0, 0.0, 1.0) : clamp( coul*couleur0, 0.0, 1.0 );
    
-   FragColor = (typeIllumination==0) ? AttribsIn.couleur : clamp( coul, 0.0, 1.0 );
+   
+
+   
+
    if ( afficheNormales ) FragColor = vec4(N,1.0);
 }

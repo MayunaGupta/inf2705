@@ -17,6 +17,9 @@ GLuint prog;      // votre programme de nuanceurs
 GLint locVertex = -1;
 GLint locNormal = -1;
 GLint locTexCoord = -1;
+GLint locTexCoord1 =-1;
+GLint locTexCoord2= -1;
+GLint locTexCoord34=-1;
 GLint locmatrModel = -1;
 GLint locmatrVisu = -1;
 GLint locmatrProj = -1;
@@ -128,7 +131,7 @@ struct LightModelParameters
    int twoSide;       // éclairage sur les deux côtés ou un seul?
 } LightModel = { glm::vec4( 0.1, 0.1, 0.1, 1.0 ), false, false };
 
-struct
+struct 
 {
    // partie 1: illumination
    int typeIllumination;     // 0:Gouraud, 1:Phong
@@ -309,6 +312,8 @@ void chargerNuanceurs()
       // demander la "Location" des variables
       if ( ( locVertex = glGetAttribLocation( prog, "Vertex" ) ) == -1 ) std::cerr << "!!! pas trouvé la \"Location\" de Vertex" << std::endl;
       if ( ( locNormal = glGetAttribLocation( prog, "Normal" ) ) == -1 ) std::cerr << "!!! pas trouvé la \"Location\" de Normal (partie 1)" << std::endl;
+
+      
       if ( ( locTexCoord = glGetAttribLocation( prog, "TexCoord" ) ) == -1 ) std::cerr << "!!! pas trouvé la \"Location\" de TexCoord (partie 3)" << std::endl;
       if ( ( locmatrModel = glGetUniformLocation( prog, "matrModel" ) ) == -1 ) std::cerr << "!!! pas trouvé la \"Location\" de matrModel" << std::endl;
       if ( ( locmatrVisu = glGetUniformLocation( prog, "matrVisu" ) ) == -1 ) std::cerr << "!!! pas trouvé la \"Location\" de matrVisu" << std::endl;
@@ -417,6 +422,46 @@ void FenetreTP::initialiser()
 
    };
 
+  /* GLfloat cootexdice[2*4*6]={
+      0.5,  0.75,   0.75, 0.75, 0.5, 1.0,    0.76,1.0 ,     // P3,P2,P0,P1
+      0.333333333333333, 0.0, 0.66666666666666, 0.0, 0.33333333,  0.33333333,   0.66666666666666666, 0.33333333333333  ,     // P5,P4,P1,P0
+      0.66666666666666666, 0.0,  1.0, 0.0, 0.66666666666666666, 0.33333333333333,   1.0,  0.333333333333333333 ,    // P6,P5,P2,P1
+      0.0,  0.33333333,  0.3333333333333, 0.3333333333333,  0.0,  0.6666666666666,   0.333333333333,0.6666666666666  ,   // P7,P6,P3,P2
+      0.333333,  0.333333333333333, 0.6666666666, 0.333333333,   0.333333333333,  0.6666666666666,   0.6666666666666,0.6666666666666 ,   // P4,P7,P0,P3
+      0.75,  0.5,  1.0, 0.5 ,  0.75, 0.75,   1.0,0.75 ,   // P4,P5,P7,P6
+
+   };*/
+
+   GLfloat cootexdice[2*4*6]={
+      0.333333,  0.0,    0.6666666, 0.0,    0.3333333,  0.33333333,   0.6666666,0.3333333333   ,   // P3,P2,P0,P1
+      0.0,  0.333333,    0.333333333333, 0.3333333,    0.0,  0.6666666,   0.333333,0.666666666,// P5,P4,P1,P0
+      0.333333, 0.3333333333,    0.66666666666, 0.333333333,    0.33333333,  0.66666666,   0.66666666,0.66666666666,// P6,P5,P2,P1
+      0.66666666666, 0.333333333,     1.0, 0.333333333,    0.6666666,  0.6666666,   1.0, 0.6666666666 ,// P7,P6,P3,P2
+      0.0,  0.666666666,    0.33333333, 0.6666666666,    0.0,  1.0,   0.333333333 ,1.0 ,// P4,P7,P0,P3
+      0.3333333333,  0.66666666666,    0.6666666, 0.666666666,    0.3333333333,  1.0,   0.6666666,1.0  // P4,P5,P7,P6
+
+   };
+
+   GLfloat cootexcheques[2*4*6]={
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0   ,   // P3,P2,P0,P1
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0,// P5,P4,P1,P0
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0 ,// P6,P5,P2,P1
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0 ,// P7,P6,P3,P2
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0 ,// P4,P7,P0,P3
+      0.0,  0.0,    1.0, 0.0,    0.0,  1.0,   1.0,1.0  // P4,P5,P7,P6
+
+   };
+   GLfloat cootexmetal[2*4*6]={
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0,// P3,P2,P0,P1
+
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0, // P5,P4,P1,P0
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0,  // P6,P5,P2,P1
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0, // P7,P6,P3,P2
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0, // P4,P7,P0,P3
+      0.0,  0.0,    0.0,  1.0,   1.0,0.0   , 1.0, 1.0// P4,P5,P7,P6
+   };
+
+
    // allouer les objets OpenGL
    glGenVertexArrays( 2, vao );
    glGenBuffers( 5, vbo );
@@ -439,9 +484,39 @@ void FenetreTP::initialiser()
 
    
    // partie 3: charger le VBO pour les coordonnées de texture
+   
+   //GLint locTexCoo = glGetUniformLocation( prog, "TexCoord" );
+
+   if (varsUnif.texnumero==1){
+      glBindBuffer( GL_ARRAY_BUFFER, vbo[2] );
+      glBufferData( GL_ARRAY_BUFFER, sizeof(cootexdice), cootexdice, GL_STATIC_DRAW );
+      glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+      glEnableVertexAttribArray(locTexCoord);
+   }
+   else if (varsUnif.texnumero==2) {
+
+      std::cout<<"fgerrgefeegergrj6j"<<std::endl;
+      glBindBuffer( GL_ARRAY_BUFFER, vbo[3] );
+      glBufferData( GL_ARRAY_BUFFER, sizeof(cootexcheques), cootexcheques, GL_STATIC_DRAW );
+      glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+      glEnableVertexAttribArray(locTexCoord);
+   }
+   else{ 
+      glBindBuffer( GL_ARRAY_BUFFER, vbo[4] );
+      glBufferData( GL_ARRAY_BUFFER, sizeof(cootexmetal), cootexmetal, GL_STATIC_DRAW );
+      glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+      glEnableVertexAttribArray(locTexCoord);
+
+      } 
+   
+   
+   glBindVertexArray(0);
+   
+   
+   
    // ...
 
-   glBindVertexArray(0);
+   
 
    // initialiser le VAO pour une ligne (montrant la direction du spot)
    glGenBuffers( 1, &vboLumi );
@@ -484,18 +559,23 @@ void afficherModele()
    {
    default:
       //std::cout << "Sans texture" << std::endl;
+      glBindTexture( GL_TEXTURE_2D, 0);
       break;
    case 1:
-      //std::cout << "Texture 1 DE" << std::endl;
+      //std::cout << "Texture 1 DE"<< "TEXNUMERO= "<<varsUnif.texnumero << std::endl;
+      glBindTexture( GL_TEXTURE_2D, textures[0]);
       break;
    case 2:
       //std::cout << "Texture 2 ECHIQUIER" << std::endl;
+      glBindTexture( GL_TEXTURE_2D, textures[1]);
       break;
    case 3:
       //std::cout << "Texture 3 METAL" << std::endl;
+      glBindTexture( GL_TEXTURE_2D, textures[2] );
       break;
    case 4:
       //std::cout << "Texture 4 MOSAIQUE" << std::endl;
+      glBindTexture( GL_TEXTURE_2D, textures[3] );
       break;
    }
 
@@ -678,7 +758,13 @@ void FenetreTP::afficherScene()
    glUniformMatrix4fv( locmatrProj, 1, GL_FALSE, matrProj );
    glUniformMatrix4fv( locmatrVisu, 1, GL_FALSE, matrVisu );
    glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
-   //glActiveTexture( GL_TEXTURE0 ); // activer la texture '0' (valeur de défaut)
+   
+   /*
+   glActiveTexture( GL_TEXTURE[0]); // activer la texture '0' (valeur de défaut)
+   glActiveTexture( GL_TEXTURE[1]); // activer la texture '0' (valeur de défaut)
+   glActiveTexture( GL_TEXTURE[2]); // activer la texture '0' (valeur de défaut)
+   glActiveTexture( GL_TEXTURE[3]); // activer la texture '0' (valeur de défaut)
+   */
    glUniform1i( loclaTexture, 0 ); // '0' => utilisation de GL_TEXTURE0
    glUniform1f( locfacteurDeform, Etat::facteurDeform );
    glUniform1f( locTessLevelInner, Etat::TessLevelInner );
@@ -701,8 +787,8 @@ static void echoEtats( )
    std::cout << " modèle d'illumination= " << illuminationStr[varsUnif.typeIllumination]
              << ", refléxion spéculaire= " << reflexionStr[varsUnif.utiliseBlinn]
              << ", spot= " << spotStr[varsUnif.utiliseDirect]
-             << std::endl;
-}
+             << std::endl
+;}
 
 // fonction de gestion du clavier
 void FenetreTP::clavier( TP_touche touche )

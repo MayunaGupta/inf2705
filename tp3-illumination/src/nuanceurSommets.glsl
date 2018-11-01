@@ -66,6 +66,7 @@ out Attribs {
    vec3 obsVec;
    vec3 lightVec[2];
    vec3 spotDir[2];
+   vec2 texCoord;
 } AttribsOut;
 
 float calculerSpot( in vec3 D, in vec3 L )
@@ -115,7 +116,7 @@ void main( void )
    vec4 CoColor = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
 
    AttribsOut.couleur= CoColor;
-
+   AttribsOut.texCoord=TexCoord.st;
    // couleur du sommet
    //
    AttribsOut.normale = matrNormale * Normal;
