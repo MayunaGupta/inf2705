@@ -1,3 +1,4 @@
+
 #version 410
 
 // Définition des paramètres des sources de lumière
@@ -46,20 +47,27 @@ layout (std140) uniform varsUnif
    int afficheTexelFonce;    // un texel noir doit-il être affiché 0:noir, 1:mi-coloré, 2:transparent?
 };
 
-uniform sampler2D laTexture;
+uniform mat4 matrModel;
+uniform mat4 matrVisu;
+uniform mat4 matrProj;
+uniform mat3 matrNormale;
 
 /////////////////////////////////////////////////////////////////
 
-in Attribs {
+layout(location=0) in vec4 Vertex;
+layout(location=2) in vec3 Normal;
+layout(location=3) in vec4 Color;
+layout(location=8) in vec4 TexCoord;
+
+
+out Attribs {
    vec4 couleur;
    vec3 normale;
    vec3 obsVec;
    vec3 lightVec[2];
    vec3 spotDir[2];
    vec2 texCoord;
-} AttribsIn;
-
-out vec4 FragColor;
+} AttribsOut;
 
 float calculerSpot( in vec3 D, in vec3 L )
 {
@@ -78,61 +86,56 @@ float calculerSpot( in vec3 D, in vec3 L )
 
    return( spotFactor );
 }
+vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O, in vec3 D)
+{  
+   vec4 newColor = vec4(0.0);
+   newColor += FrontMaterial.ambient * LightSource.ambient;
+   // produit scalaire pour la réflexion spéculaire
+   float NdotHV = max( dot( normalize( L + O ), N), 0.0 );
 
-vec4 calculerReflexion( in vec3 L, in vec3 N, in vec3 O, in vec3 D )
-{
-   vec4 coulp = vec4(0.0,0.0,0.0,0.0);
-   coulp += FrontMaterial.ambient * LightSource.ambient;
+   newColor += FrontMaterial.diffuse * LightSource.diffuse * max(0.0,dot(N,L));
+   // composante spéculaire
    
-   float NdotL = max( 0.0, dot( N, L ) );
+   newColor += FrontMaterial.specular * LightSource.specular * pow(NdotHV, FrontMaterial.shininess);
+   // composante ambiante
+   
 
-   coulp += FrontMaterial.diffuse * LightSource.diffuse * NdotL;
-
-   // calcul de la composante spéculaire (selon Phong ou Blinn)
-
-
-   float NdotHV = max( 0.0, ( utiliseBlinn ) ? dot( normalize( L + O ), N ) : dot( reflect( -L, N ), O ) );
-   coulp += FrontMaterial.specular * LightSource.specular *pow( NdotHV, FrontMaterial.shininess );
-
-   coulp=coulp*calculerSpot(D,L);
-   coulp = (!utiliseCouleur) ? vec4( 0.2, 0.2, 0.2, 1.0 ) : coulp;
-   return( coulp );
+   newColor *= calculerSpot(D,L);
+   newColor = (!utiliseCouleur) ? vec4( 0.2, 0.2, 0.2, 1.0 ) : newColor;
+   return( newColor );
 }
 
 void main( void )
 {
-  
-
-   vec3 N = normalize( AttribsIn.normale ); // vecteur normal
-   vec3 O = normalize( AttribsIn.obsVec );  // position de l'observateur
-
-   vec3 L[2];
-   vec3 D[2];
-   for(int i=0; i<2; i++){
-      L[i] = normalize( AttribsIn.lightVec[i] ); // vecteur vers la source lumineuse
-      D[i] = normalize(AttribsIn.spotDir[i]);
-   }
-
-  
-   FragColor = vec4( 0.7, 0.7, 0.7, 1.0 ); // gris moche!
-   // ajout de l’émission et du terme ambiant du modèle d’illumination
-
-   vec4 coul = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
-   // calcul de la composante ambiante de la 1e source de lumière
+   // transformation standard du sommet
    
-   for(int i=0; i<2; i++){
-      coul +=  calculerReflexion( L[i], N, O ,D[i]);
+   gl_Position = matrModel * Vertex;
+
+   vec3 pos = vec3( matrVisu * matrModel * Vertex );
+   
+
+   vec4 CoColor = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
+
+   AttribsOut.couleur= CoColor;
+   AttribsOut.texCoord=TexCoord.st;
+   
+   AttribsOut.normale = matrNormale * Normal;
+
+
+   //AttribsOut.obsVec = normalize(-pos); 
+
+
+   //for(int i=0;i<2;i++){
+
+      //AttribsOut.lightVec[i] = ( matrVisu * LightSource.position[i] ).xyz - pos;
+      //AttribsOut.spotDir[i] = transpose(inverse(mat3(matrVisu ))) *(-LightSource.spotDirection[i]);
+      //AttribsOut.couleur += calculerReflexion( AttribsOut.lightVec[i], AttribsOut.normale, AttribsOut.obsVec, AttribsOut.spotDir[i]);
+
+
+      //float spotFactor= calculerSpot(AttribsOut.spotDir[i] , AttribsOut.lightVec[i]);
+     // AttribsOut.couleur= AttribsOut.couleur*spotFactor;
       
-   }
-   
-   vec4 couleur0 = texnumero != 0 ? texture( laTexture, AttribsIn.texCoord ) : vec4(1.0);
-
-
-   FragColor = (typeIllumination==0) ? clamp(AttribsIn.couleur*couleur0, 0.0, 1.0) : clamp( coul*couleur0, 0.0, 1.0 );
-   
+  // }
    
 
-   
-
-   if ( afficheNormales ) FragColor = vec4(N,1.0);
 }

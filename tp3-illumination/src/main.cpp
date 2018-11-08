@@ -257,20 +257,37 @@ void chargerNuanceurs()
       prog = glCreateProgram();
 
       // attacher le nuanceur de sommets
-      const GLchar *chainesSommets = ProgNuanceur::lireNuanceur( "nuanceurSommets.glsl" );
-      if ( chainesSommets != NULL )
-      {
-         GLuint nuanceurObj = glCreateShader( GL_VERTEX_SHADER );
-         glShaderSource( nuanceurObj, 1, &chainesSommets, NULL );
-         glCompileShader( nuanceurObj );
-         glAttachShader( prog, nuanceurObj );
-         ProgNuanceur::afficherLogCompile( nuanceurObj );
-         delete [] chainesSommets;
+      if (Etat::utiliseTess){
+         const GLchar *chainesSommets = ProgNuanceur::lireNuanceur( "nuanceurSommetsTess.glsl" );
+         if ( chainesSommets != NULL )
+         {
+            GLuint nuanceurObj = glCreateShader( GL_VERTEX_SHADER );
+            glShaderSource( nuanceurObj, 1, &chainesSommets, NULL );
+            glCompileShader( nuanceurObj );
+            glAttachShader( prog, nuanceurObj );
+            ProgNuanceur::afficherLogCompile( nuanceurObj );
+            delete [] chainesSommets;
+         }
+      }
+      else{
+         const GLchar *chainesSommets = ProgNuanceur::lireNuanceur( "nuanceurSommets.glsl" );
+         if ( chainesSommets != NULL )
+         {
+            GLuint nuanceurObj = glCreateShader( GL_VERTEX_SHADER );
+            glShaderSource( nuanceurObj, 1, &chainesSommets, NULL );
+            glCompileShader( nuanceurObj );
+            glAttachShader( prog, nuanceurObj );
+            ProgNuanceur::afficherLogCompile( nuanceurObj );
+            delete [] chainesSommets;
+         }
       }
       if ( Etat::utiliseTess )
       {
          // partie 4: À ACTIVER (touche '9')
          // attacher le nuanceur de controle de la tessellation
+
+
+
          const GLchar *chainesTessCtrl = ProgNuanceur::lireNuanceur( "nuanceurTessCtrl.glsl" );
          if ( chainesTessCtrl != NULL )
          {
@@ -487,27 +504,24 @@ void FenetreTP::initialiser()
    
    //GLint locTexCoo = glGetUniformLocation( prog, "TexCoord" );
 
-   if (varsUnif.texnumero==1){
+      std::cout<< "texture number" << varsUnif.texnumero << std::endl;
       glBindBuffer( GL_ARRAY_BUFFER, vbo[2] );
       glBufferData( GL_ARRAY_BUFFER, sizeof(cootexdice), cootexdice, GL_STATIC_DRAW );
       glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
       glEnableVertexAttribArray(locTexCoord);
-   }
-   else if (varsUnif.texnumero==2) {
 
       std::cout<<"fgerrgefeegergrj6j"<<std::endl;
       glBindBuffer( GL_ARRAY_BUFFER, vbo[3] );
       glBufferData( GL_ARRAY_BUFFER, sizeof(cootexcheques), cootexcheques, GL_STATIC_DRAW );
       glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
       glEnableVertexAttribArray(locTexCoord);
-   }
-   else{ 
+
+      std::cout<< "texture number" << varsUnif.texnumero << std::endl;
       glBindBuffer( GL_ARRAY_BUFFER, vbo[4] );
       glBufferData( GL_ARRAY_BUFFER, sizeof(cootexmetal), cootexmetal, GL_STATIC_DRAW );
       glVertexAttribPointer( locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0 );
       glEnableVertexAttribArray(locTexCoord);
 
-      } 
    
    
    glBindVertexArray(0);
@@ -593,7 +607,7 @@ void afficherModele()
       glUniformMatrix3fv( locmatrNormale, 1, GL_TRUE, // on transpose
       glm::value_ptr( matrNormale ) );
 
-
+      
 
 
       glPatchParameteri( GL_PATCH_VERTICES, 4 );
@@ -603,9 +617,28 @@ void afficherModele()
       case 1:
          // afficher le cube
          glBindVertexArray( vao[0] );
+
+         if (varsUnif.texnumero==1){
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+            glVertexAttribPointer(locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+         }
+         else{
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+            glVertexAttribPointer(locTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+         }
          if ( Etat::utiliseTess )
          {
             // partie 4: afficher le cube avec des GL_PATCHES
+
+            ///glDrawElements( GL_PATCHES, normales  , GL_UNSIGNED_INT, 0 );
+            glDrawArrays( GL_PATCHES, 0, 4 );
+            glDrawArrays( GL_PATCHES,  0, 4 );
+            glDrawArrays( GL_PATCHES,  4, 4 );
+            glDrawArrays( GL_PATCHES,  8, 4 );
+            glDrawArrays( GL_PATCHES, 12, 4 );
+            glDrawArrays( GL_PATCHES, 16, 4 );
+            glDrawArrays( GL_PATCHES, 20, 4 );
+
          }
          else
          {
