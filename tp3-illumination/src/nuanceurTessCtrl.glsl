@@ -6,7 +6,7 @@
 
 /////////////////////////////////////////////////////////////////
 layout(vertices = 4) out;
-//in int gl_InvocationID;
+//in int gl_InvocationID[];
 //in vec3 gl_TessCoord;
 //in int gl_PatchVerticesIn;
 ///in int gl_PrimitiveID;
@@ -14,11 +14,11 @@ layout(vertices = 4) out;
 //patch in float gl_TessLevelOuter[4];
 
 //patch in float gl_TessLevelInner[2];
-
+//patch out float gl_TessLevelOuter[4];
+//patch out float gl_TessLevelInner[2];
 uniform float TessLevelInner;
 uniform float TessLevelOuter;
-
-
+uniform float facteurDeform;
 in Attribs {
    vec4 couleur;
    vec3 normale;
@@ -50,9 +50,17 @@ void main()
       gl_TessLevelOuter[1] = TessLevelOuter;
       gl_TessLevelOuter[2] = TessLevelOuter;
       gl_TessLevelOuter[3] = TessLevelOuter;
+
    }
 
    AttribsOut[gl_InvocationID].couleur = AttribsIn[gl_InvocationID].couleur;
+   AttribsOut[gl_InvocationID].normale = AttribsIn[gl_InvocationID].normale;
+   AttribsOut[gl_InvocationID].obsVec = AttribsIn[gl_InvocationID].obsVec;
+   AttribsOut[gl_InvocationID].lightVec[0] = AttribsIn[gl_InvocationID].lightVec[0];
+   AttribsOut[gl_InvocationID].spotDir[0] = AttribsIn[gl_InvocationID].spotDir[0];
+   AttribsOut[gl_InvocationID].lightVec[1] = AttribsIn[gl_InvocationID].lightVec[1];
+   AttribsOut[gl_InvocationID].spotDir[1] = AttribsIn[gl_InvocationID].spotDir[1];
+   AttribsOut[gl_InvocationID].texCoord = AttribsIn[gl_InvocationID].texCoord;
 }
 
 

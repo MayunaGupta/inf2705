@@ -2,7 +2,7 @@ Q1: On pourrait vouloir que la texture de l'échiquier se « déplace » sur
     l'objet en fonction du temps, comme si elle glissait sur la surface dans
     une direction donnée. Comment implanteriez-vous cette fonctionnalité?
 
-
+Ans:- We can move the coordinates of the texture as a function of time and then render. Or pass the time as a variable in shader which can be periodically rendered.
 Q2: Vous avez probablement remarqué que même en demandant un très grand
     niveau de tessellation, le générateur de tessellation ne produira pas
     une tessellation plus fine que le niveau maximum donné par la constante
@@ -11,3 +11,4 @@ Q2: Vous avez probablement remarqué que même en demandant un très grand
     Que doit-on alors faire si on veut, malgré tout, une tessellation deux
     fois plus fine dans chaque direction?
 
+Ans: We can create two more sets of tesselation shaders which will recieve the inputs from the said shaders and tessellate it.s

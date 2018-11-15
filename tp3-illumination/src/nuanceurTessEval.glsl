@@ -51,7 +51,7 @@ uniform mat4 matrVisu;
 uniform mat4 matrProj;
 uniform mat3 matrNormale;
 
-
+//==========================================================
 
 layout(quads) in;
 
@@ -147,13 +147,14 @@ void main()
 
    gl_Position = matrProj * matrVisu * Vertex;
 
+
    vec3 pos = vec3( matrVisu * Vertex );
 
    AttribsOut.normale = interpole( AttribsIn[0].normale, AttribsIn[1].normale, AttribsIn[3].normale, AttribsIn[2].normale );
    
    AttribsOut.texCoord = interpole( AttribsIn[0].texCoord, AttribsIn[1].texCoord, AttribsIn[3].texCoord, AttribsIn[2].texCoord );
 
-   AttribsOut.obsVec = -pos;   
+   AttribsOut.obsVec = normalize(-pos);   
    
    vec4 CoColor = FrontMaterial.emission + FrontMaterial.ambient * LightModel.ambient;
 
@@ -166,7 +167,7 @@ void main()
       AttribsOut.lightVec[i] = ( matrVisu * LightSource.position[i] ).xyz - pos;
       AttribsOut.spotDir[i] = transpose(inverse(mat3(matrVisu ))) *(-LightSource.spotDirection[i]);
       AttribsOut.couleur += calculerReflexion( normalize(AttribsOut.lightVec[i]), normalize(AttribsOut.normale), normalize(AttribsOut.obsVec), normalize(AttribsOut.spotDir[i]));
-      AttribsOut.couleur += vec4(0.75);
+     // AttribsOut.couleur += vec4(0.75);
 
       
    }
